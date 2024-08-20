@@ -1,0 +1,31 @@
+{
+  "profiles": {
+    "Mafia_API (Dev)": {
+      "commandName": "Project",
+      "launchUrl": "weatherforecast",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "GOOGLE_APPLICATION_CREDENTIALS": "translation-user.json"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:5000;",
+      "nativeDebugging": true
+    },
+    "Docker (Prod)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "publishAllPorts": true,
+      "useSSL": true
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "launchUrl": "https://localhost:5000/weatherforecast",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:5000;",
+        "GOOGLE_APPLICATION_CREDENTIALS": "translation-user.json"
+      },
+      "distributionName": ""
+    }
+  }
+}
