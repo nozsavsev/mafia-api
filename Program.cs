@@ -2,7 +2,9 @@ using _Mafia_API;
 using _Mafia_API.Helpers;
 using _Mafia_API.Hubs;
 using _Mafia_API.Services;
+using Bogus;
 using Microsoft.OpenApi.Models;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,7 +21,6 @@ internal class Program
 
     private static void Main(string[] args)
     {
-
 
         var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -47,12 +48,15 @@ internal class Program
 
         //register services
         builder.Services.AddTransient<UserService>();
-        builder.Services.AddTransient<GameService>();
+        builder.Services.AddTransient<RoomService>();
+        builder.Services.AddTransient<RoomService>();
 
 
         builder.Services.AddControllers().AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+
         }); ;
 
         //add swagger
@@ -87,21 +91,36 @@ internal class Program
         {
             const string tokenCookiePrefix = "user=";
 
-            string authCookie = "";
+            string authCookie = null;
 
-            if (Context.Request.Headers.Cookie.ToString().Length > 0)
-                foreach (var cookie in Context.Request.Headers.Cookie.ToString().Split(";").Select(s => s.Trim()))
-                    authCookie = cookie.Substring(tokenCookiePrefix.Length);
+            if (Context.Request.Headers.Cookie.Count > 0)
+            {
+                foreach (var cookie in Context.Request.Headers.Cookie.ToString().Split(';').Select(s => s.Trim()))
+                {
+                    if (cookie.StartsWith(tokenCookiePrefix))
+                    {
+                        authCookie = cookie.Substring(tokenCookiePrefix.Length);
+                        break; 
+                    }
+                }
+            }
 
-            Context.Items["UserID"] = authCookie;
+            if (!string.IsNullOrEmpty(authCookie))
+            {
+                Context.Items["UserID"] = authCookie;
+            }
+
+            Console.WriteLine(Context.Items["UserID"]);
 
             return Next();
         });
 
+        
+
         app.UseRouting();
         app.UseMiddleware<ErrorHandlerMiddleware>();
         app.MapControllers();
-        app.MapHub<GameHub>("/authHub");
+        app.MapHub<GameHub>("/gameRealtimeHub");
 
 
         if (app.Environment.IsDevelopment())
@@ -149,5 +168,20 @@ public class ErrorHandlerMiddleware
 
             await response.WriteAsync(result);
         }
+    }
+}
+
+public class DateTimeConverter : JsonConverter<DateTime>
+{
+    private const string Format = "yyyy-MM-ddTHH:mm:ss.fffZ";
+
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToUniversalTime().ToString(Format));
+    }
+
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return DateTime.Parse(reader.GetString());
     }
 }
