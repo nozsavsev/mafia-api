@@ -1,7 +1,6 @@
 ﻿using _Mafia_API.Models;
 using _Mafia_API.Services;
 using Google.Cloud.TextToSpeech.V1;
-using NAudio.Wave;
 using System.Text.Json.Serialization;
 
 namespace _Mafia_API.Helpers
@@ -212,22 +211,54 @@ namespace _Mafia_API.Helpers
         }
 
 
-        public static void ConcatenateMp3Files(string[] mp3Files, string outputFile)
+       public static void ConcatenateMp3Files(string[] mp3Files, string outputFile)
         {
-            using (var waveFileWriter = new WaveFileWriter(outputFile, new Mp3FileReader(mp3Files[0]).WaveFormat))
+            using (var outputStream = new FileStream(outputFile, FileMode.Create))
             {
-                foreach (var mp3File in mp3Files)
+                for (int i = 0; i < mp3Files.Length; i++)
                 {
-                    using (var reader = new Mp3FileReader(mp3File))
+                    using (var inputStream = new FileStream(mp3Files[i], FileMode.Open))
                     {
-                        var buffer = new byte[reader.Length];
-                        int read;
-                        while ((read = reader.Read(buffer, 0, buffer.Length)) > 0)
+                        // For the first file, copy everything
+                        if (i == 0)
                         {
-                            waveFileWriter.Write(buffer, 0, read);
+                            inputStream.CopyTo(outputStream);
+                        }
+                        else
+                        {
+                            // For subsequent files, skip ID3 tags and only copy MP3 frame data
+                            SkipId3v2Tag(inputStream);
+
+                            // Copy MP3 frames without the header from the second file onwards
+                            byte[] buffer = new byte[1024];
+                            int bytesRead;
+                            while ((bytesRead = inputStream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                outputStream.Write(buffer, 0, bytesRead);
+                            }
                         }
                     }
                 }
+            }
+        }
+
+        public static void SkipId3v2Tag(FileStream inputStream)
+        {
+            byte[] header = new byte[10];
+            inputStream.Read(header, 0, 10);
+
+            if (header[0] == 'I' && header[1] == 'D' && header[2] == '3')
+            {
+                // ID3v2 tag found, parse size
+                int tagSize = (header[6] << 21) | (header[7] << 14) | (header[8] << 7) | header[9];
+
+                // Skip the tag
+                inputStream.Seek(tagSize, SeekOrigin.Current);
+            }
+            else
+            {
+                // No ID3v2 tag, reset stream position
+                inputStream.Seek(0, SeekOrigin.Begin);
             }
         }
 
