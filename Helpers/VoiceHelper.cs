@@ -11,7 +11,7 @@ namespace _Mafia_API.Helpers
         public static void GenerateText(string text, string outputFile)
         {
 
-            outputFile = "voice_dynamic\\" + outputFile;
+            outputFile = Path.Combine("voice_dynamic", outputFile);
 
             TextToSpeechClient client = TextToSpeechClient.Create();
 
@@ -93,7 +93,7 @@ namespace _Mafia_API.Helpers
         public static string GenerateAnnouncement(AnnouncementType type, string? userId = null)
         {
             string announcement = "announcement_" + SnowflakeGlobal.Generate();
-            string announcementPath = Path.Combine("voice_dynamic" , announcement);
+            string announcementPath = Path.Combine("voice_dynamic", announcement);
             string userFile = Path.Combine("voice_dynamic", userId);
 
             var user = UserService.st_GetUser(userId);
@@ -103,62 +103,62 @@ namespace _Mafia_API.Helpers
                 case AnnouncementType.city_down:
                     {
                         int variant = new Random().Next(2);
-                        File.Copy($"voice_static\\city_down_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"city_down_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.slut_on:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\slut_on_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"slut_on_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.slut_off:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\slut_off_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"slut_off_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.mafia_on:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\mafia_on_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"mafia_on_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.mafia_off:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\mafia_off_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"mafia_off_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.doctor_on:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\doctor_on_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"doctor_on_{variant}.mp3"), announcementPath);
                     }
                     break;
 
                 case AnnouncementType.doctor_off:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\doctor_off_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"doctor_off_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.sherif_on:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\sherif_on_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"sherif_on_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.sherif_off:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\sherif_off_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"sherif_off_{variant}.mp3"), announcementPath);
                     }
                     break;
                 case AnnouncementType.city_up:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy($"voice_static\\city_up_{variant}.mp3", announcementPath);
+                        File.Copy(Path.Combine($"voice_static", "city_up_{variant}.mp3"), announcementPath);
                     }
                     break;
 
@@ -170,10 +170,10 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            $"voice_static\\player_killed_pre_{variant}.mp3",
+                            Path.Combine($"voice_static","player_killed_pre_{variant}.mp3"),
                             userFile ,
-                            $"voice_static\\player_killed_pst_{variant}.mp3",
-                            $"voice_static\\player_killed_cmnt_{variant_cmnt}.mp3"
+                            Path.Combine($"voice_static","player_killed_pst_{variant}.mp3"),
+                            Path.Combine($"voice_static","player_killed_cmnt_{variant_cmnt}.mp3")
                         },
                         announcementPath);
 
@@ -186,9 +186,9 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            $"voice_static\\player_healed_pre_{variant}.mp3",
+                            Path.Combine($"voice_static","player_healed_pre_{variant}.mp3"),
                             userFile ,
-                            $"voice_static\\player_healed_cmnt_{variant_cmnt}.mp3"
+                            Path.Combine($"voice_static","player_healed_cmnt_{variant_cmnt}.mp3")
                         },
                         announcementPath);
                     }
@@ -199,7 +199,7 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            $"voice_static\\vote_killed_{variant}.mp3",
+                            Path.Combine($"voice_static","vote_killed_{variant}.mp3"),
                             userFile ,
                         },
                         announcementPath);
