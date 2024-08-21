@@ -9,28 +9,11 @@ using System.Text.Json.Serialization;
 internal class Program
 {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     static Program()
     {
         if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             DotEnv.Load("dev.env");
     }
-
-
-
 
     //class Replica
     //{
