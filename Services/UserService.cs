@@ -1,4 +1,5 @@
 ﻿
+using _Mafia_API.Helpers;
 using _Mafia_API.Hubs;
 using _Mafia_API.Models;
 using Microsoft.AspNetCore.SignalR;
@@ -23,16 +24,42 @@ namespace _Mafia_API.Services
 
         public List<User> GetUsers()
         {
+
+
             return UserStore;
         }
 
         public User? GetUser(string id)
         {
-            return UserStore.Find(x => x.id == id);
+            var user = UserStore.Find(x => x.id == id);
+
+            if (user != null && !File.Exists(Path.Combine("data", id)))
+                if (user.nameConfirmed == true)
+                    VoiceHelper.GenerateText(user.fullName, user.id);
+
+            return user;
+        }
+
+        public static User? st_GetUser(string id)
+        {
+            var user = UserStore.Find(x => x.id == id);
+
+            if (user != null && !File.Exists(Path.Combine("data", id)))
+                if (user.nameConfirmed == true)
+                    VoiceHelper.GenerateText(user.fullName, user.id);
+
+            return user;
         }
 
         public User? UpdateUser(User? user)
         {
+
+            var original = GetUser(user.id);
+
+            if (original.nameConfirmed == false && user.nameConfirmed == true)
+            {
+                VoiceHelper.GenerateText(user.fullName, user.id);
+            }
 
 
             if (user == null)

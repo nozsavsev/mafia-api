@@ -362,7 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-translation-user.json
-/translation-user.json
+google-user.json
+/google-user.json
 /dev.env
 /prod.env

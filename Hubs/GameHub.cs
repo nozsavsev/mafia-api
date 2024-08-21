@@ -1,5 +1,7 @@
-﻿using _Mafia_API.Models;
+﻿using _Mafia_API.Helpers;
+using _Mafia_API.Models;
 using Microsoft.AspNetCore.SignalR;
+using static _Mafia_API.Helpers.VoiceHelper;
 
 namespace _Mafia_API.Hubs
 {
@@ -9,22 +11,22 @@ namespace _Mafia_API.Hubs
         {
             await base.OnConnectedAsync();
 
-            //var userId = Context?.Items["UserID"]?.ToString();
-            //if (userId != null)
-            //{
-            //    await Groups.AddToGroupAsync(Context.ConnectionId, userId);
-            //}
-            //else
-            //{
-            //    Console.Write("NOT adding user to group");
-            //}
         }
 
+        public async Task In_AuthAs(string userId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+        }
 
-       public async Task in_AuthAs(string userId)
-       {
-           await Groups.AddToGroupAsync(Context.ConnectionId, userId);
-       }
+        public async Task In_Announce(AnnouncementType type, string userId)
+        {
+           var announcement = GenerateAnnouncement(type, userId);
+
+            if (announcement != null)
+            {
+                await Clients.Group(userId).SendAsync("announcement", announcement);
+            }
+        }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
