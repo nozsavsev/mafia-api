@@ -18,7 +18,6 @@ namespace _Mafia_API.Services
 
         public Room createNewRoom()
         {
-
             Room room = new Room();
             RoomStore.Add(room);
             return room;

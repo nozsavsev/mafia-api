@@ -26,12 +26,13 @@ namespace _Mafia_API.Hubs
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
 
+                if (userService.GetUsersOfRoom(roomCode).Count == 0)
+                    user.isGameMaster = true;
+
                 user.currentRoom = roomCode;
 
                 userService.UpdateUser(user);
                 roomService.UpdateRoom(room);
-
-                Clients.Group(userId).SendAsync("userUpdated", user).Wait();
             }
         }
 

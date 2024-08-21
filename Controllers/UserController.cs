@@ -122,7 +122,7 @@ namespace _Mafia_API.Controllers
 
         [HttpGet]
         [Route("createRoom")]
-        public ActionResult<ResponseWrapper<Room>> CreateRoomAndJoin()
+        public ActionResult<ResponseWrapper<Room>> CreateRoomAnd()
         {
             var room = roomService.createNewRoom();
             var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, room);

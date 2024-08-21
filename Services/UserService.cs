@@ -17,15 +17,8 @@ namespace _Mafia_API.Services
             this.hubContext = hubContext;
         }
 
-        public void RemoveUser(string id)
-        {
-            UserStore.RemoveAll(x => x.id == id);
-        }
-
         public List<User> GetUsers()
         {
-
-
             return UserStore;
         }
 
