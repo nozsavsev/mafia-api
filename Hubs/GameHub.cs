@@ -1,5 +1,4 @@
-﻿using _Mafia_API.Helpers;
-using _Mafia_API.Models;
+﻿using _Mafia_API.Models;
 using Microsoft.AspNetCore.SignalR;
 using static _Mafia_API.Helpers.VoiceHelper;
 
@@ -20,7 +19,7 @@ namespace _Mafia_API.Hubs
 
         public async Task In_Announce(AnnouncementType type, string userId)
         {
-           var announcement = GenerateAnnouncement(type, userId);
+            var announcement = GenerateAnnouncement(type, userId);
 
             if (announcement != null)
             {

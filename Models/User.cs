@@ -32,7 +32,7 @@ namespace _Mafia_API.Models
         [JsonPropertyName("dead")]
         dead,
 
-    }                                                       
+    }
 
     public class User
     {

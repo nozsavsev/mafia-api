@@ -2,16 +2,9 @@
 using _Mafia_API.Helpers;
 using _Mafia_API.Hubs;
 using _Mafia_API.Services;
-using Bogus;
-using Google.Cloud.TextToSpeech.V1;
 using Microsoft.OpenApi.Models;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 
 internal class Program
 {
@@ -141,7 +134,7 @@ internal class Program
         //    GenerateText(mp3.text, mp3.file);
         //    Console.WriteLine($"Generated {mp3.file}");
         //}
-        
+
         Thread cleanupThread = new Thread(() => CleanUpDirectory("voice_dynamic"));
         cleanupThread.IsBackground = true;
         cleanupThread.Start();
@@ -266,7 +259,7 @@ internal class Program
 
         bool dev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
 
-        TimeSpan maxFileAge = dev ? TimeSpan.FromSeconds(120) : TimeSpan.FromDays(3); 
+        TimeSpan maxFileAge = dev ? TimeSpan.FromSeconds(120) : TimeSpan.FromDays(3);
         TimeSpan checkInterval = dev ? TimeSpan.FromSeconds(10) : TimeSpan.FromDays(1);
         while (true)
         {
