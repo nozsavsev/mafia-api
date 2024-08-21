@@ -21,7 +21,7 @@ namespace _Mafia_API.Helpers
             {
                 LanguageCode = "ru-RU",
                 SsmlGender = SsmlVoiceGender.Male,
-                Name = "ru-RU-Wavenet-D"
+                Name = "ru-RU-Wavenet-D",
             };
 
             AudioConfig audioConfig = new AudioConfig

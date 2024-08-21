@@ -4,11 +4,18 @@ namespace _Mafia_API.Helpers
 {
     public class SnowflakeGlobal
     {
-        private static Generator SnowflakeGen = new Generator(0, new DateTime(2023, 1, 1));
+
+        private static Mutex mutex = new Mutex();
+
 
         public static string Generate()
         {
-            return SnowflakeGen.NextLong().ToString();
+            Generator SnowflakeGen = new Generator((short)Thread.CurrentThread.ManagedThreadId, new DateTime(2023, 1, 1));
+            mutex.WaitOne();
+            string result = SnowflakeGen.NextLong().ToString();
+            mutex.ReleaseMutex();
+
+            return result;
         }
 
 

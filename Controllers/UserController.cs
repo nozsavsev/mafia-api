@@ -1,7 +1,10 @@
-﻿using _Mafia_API.Models;
+﻿using _Mafia_API.Hubs;
+using _Mafia_API.Models;
 using _Mafia_API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using static _Mafia_API.Helpers.VoiceHelper;
 
 namespace _Mafia_API.Controllers
 {
@@ -15,13 +18,22 @@ namespace _Mafia_API.Controllers
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public class UserController : ControllerBase
     {
+
+        public class PushAnouncment
+        {
+            public AnnouncementType announcementType { get; set; }
+
+        }
+
         private readonly UserService userService;
         private readonly RoomService roomService;
+        private readonly IHubContext<GameHub> hubContext;
 
-        public UserController(UserService UserService, RoomService RoomService)
+        public UserController(UserService UserService, RoomService RoomService, IHubContext<GameHub> HubContext)
         {
             userService = UserService;
             roomService = RoomService;
+            hubContext = HubContext;
         }
 
         [HttpGet]
@@ -77,6 +89,33 @@ namespace _Mafia_API.Controllers
 
             return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok, user));
         }
+
+        [HttpGet]
+        [Route("currentRoom")]
+        public ActionResult<ResponseWrapper<Room>> GetCurremntRoom()
+        {
+            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, roomService.GetRoom(HttpContext?.MafiaUser()?.currentRoom));
+            return Ok(rsp);
+        }
+
+        [HttpGet]
+        [Route("createRoom")]
+        public ActionResult<ResponseWrapper<Room>> CreateRoomAndJoin()
+        {
+            var room = roomService.createNewRoom();
+            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, room);
+            return Ok(rsp);
+        }
+
+        [HttpPost]
+        [Route("pushAnonence")]
+        public ActionResult<ResponseWrapper<string>> pushAnonence([FromBody]PushAnouncment announcement)
+        {
+            GameHub.PushAnounencment(hubContext, announcement.announcementType, HttpContext?.MafiaUser()?.currentRoom, HttpContext?.MafiaUser()?.id);
+            var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok);
+            return Ok(rsp);
+        }
+
 
         [HttpGet]
         [Route("fetchAnnouncement")]

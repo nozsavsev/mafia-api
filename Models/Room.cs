@@ -21,13 +21,21 @@ namespace _Mafia_API.Models
 
         [JsonPropertyName("doctor")]
         doctor,
+
+        [JsonPropertyName("lobbie")]
+        lobbie,
     }
 
     public class Room
     {
         public string Id { get; set; } = SnowflakeGlobal.Generate();
-        public List<User> Users { get; set; }
         public string roomCode { get; set; } = RoomNumber.Generate();
         public int nightCount { get; set; } = 0;
+        public CurrentState state { get; set; } = CurrentState.lobbie;
+        public bool slutEnabled { get; set; } = false;
+        public bool doctorEnabled { get; set; } = true;
+        public bool sherifEnabled { get; set; } = true;
+        public bool sayHealedPlayer { get; set; } = false;
+        public bool sayKilledRole { get; set; } = false;
     }
 }

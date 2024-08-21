@@ -1,15 +1,15 @@
 ﻿using _Mafia_API.Models;
+using _Mafia_API.Services;
 using Microsoft.AspNetCore.SignalR;
 using static _Mafia_API.Helpers.VoiceHelper;
 
 namespace _Mafia_API.Hubs
 {
-    public class GameHub() : Hub
+    public class GameHub(UserService userService, RoomService roomService) : Hub
     {
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
-
         }
 
         public async Task In_AuthAs(string userId)
@@ -17,37 +17,53 @@ namespace _Mafia_API.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, userId);
         }
 
-        public async Task In_Announce(AnnouncementType type, string userId)
+        public async Task In_JoinRoom(string roomCode, string userId)
         {
-            var announcement = GenerateAnnouncement(type, userId);
+            var user = userService.GetUser(userId);
+            var room = roomService.GetRoom(roomCode);
 
-            if (announcement != null)
+            if (user != null && room != null)
             {
-                await Clients.Group(userId).SendAsync("announcement", announcement);
+                await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
+
+                user.currentRoom = roomCode;
+
+                userService.UpdateUser(user);
+                roomService.UpdateRoom(room);
+
+                Clients.Group(userId).SendAsync("userUpdated", user).Wait();
             }
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             await base.OnDisconnectedAsync(exception);
-
-            if (Context?.Items["UserID"]?.ToString() != null)
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, Context?.Items["UserID"].ToString());
         }
 
         public static void PushUserUpdate(IHubContext<GameHub> hubContext, User? user)
         {
-
             if (hubContext != null && user != null)
             {
-                Console.Write("Pushing user update");
                 hubContext.Clients.Group(user.id).SendAsync("userUpdated", user).Wait();
             }
-            else
-            {
-                Console.Write("NOT pushing user update");
-            }
+        }
 
+        public static void PushAnounencment(IHubContext<GameHub> hubContext, AnnouncementType type, string roomCode, string userId)
+        {
+            var announcement = GenerateAnnouncement(type, userId);
+
+            if (announcement != null)
+            {
+                hubContext.Clients.Group(roomCode).SendAsync("announcement", announcement).Wait();
+            }
+        }
+
+        public static void PushRoomUpdate(IHubContext<GameHub> hubContext, Room room, List<User>? users)
+        {
+            if (hubContext != null && users.Count != null)
+            {
+                hubContext.Clients.Group(room.roomCode).SendAsync("roomUpdate", room, users).Wait();
+            }
         }
     }
 }

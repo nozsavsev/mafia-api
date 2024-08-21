@@ -56,7 +56,7 @@ namespace _Mafia_API.Services
 
             var original = GetUser(user.id);
 
-            if (original.nameConfirmed == false && user.nameConfirmed == true)
+            if ((original.nameConfirmed == false && user.nameConfirmed == true) || (original.fullName != user.fullName))
             {
                 VoiceHelper.GenerateText(user.fullName, user.id);
             }
@@ -73,6 +73,13 @@ namespace _Mafia_API.Services
             GameHub.PushUserUpdate(hubContext, user);
 
             return user;
+        }
+
+        public List<User>? GetUsersOfRoom(string roomCode)
+        {
+            var users = UserStore.FindAll(x => x.currentRoom == roomCode);
+
+            return users;
         }
 
         public User? GetNewUser()
