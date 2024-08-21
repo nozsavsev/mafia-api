@@ -90,6 +90,28 @@ namespace _Mafia_API.Controllers
             return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok, user));
         }
 
+        [HttpPost]
+        [Route("logout")]
+        public ActionResult<ResponseWrapper<string>> Logout()
+        {
+
+            userService.DeleteUser(HttpContext.MafiaUser()?.id);
+
+            var cooptions = new CookieOptions
+            {
+                Path = "/",
+                IsEssential = true,
+                HttpOnly = false,
+                Expires = DateTime.Now.AddDays(700),
+                Domain = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "localhost" : ".nozsa.com",
+                Secure = false,
+            };
+
+            HttpContext.Response.Cookies.Append("user", "", cooptions);
+
+            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok));
+        }
+
         [HttpGet]
         [Route("currentRoom")]
         public ActionResult<ResponseWrapper<Room>> GetCurremntRoom()

@@ -40,6 +40,28 @@ namespace _Mafia_API.Services
             return user;
         }
 
+        public void DeleteUser(string id)
+        {
+            var user = UserStore.Find(x => x.id == id);
+
+            if (File.Exists(Path.Combine("data", id)))
+                File.Delete(Path.Combine("data", id));
+
+            if (user != null)
+            {
+                UserStore.RemoveAll(x => x.id == id);
+
+                if (user.isGameMaster == true)
+                {
+                    GetUsersOfRoom(user.currentRoom).ForEach(x =>
+                    {
+                        x.currentRoom = null;
+                        UpdateUser(x);
+                    });
+                }
+            }
+        }
+
         public static User? st_GetUser(string id)
         {
             var user = UserStore.Find(x => x.id == id);
