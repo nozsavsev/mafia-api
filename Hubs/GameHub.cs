@@ -61,7 +61,7 @@ namespace _Mafia_API.Hubs
 
         public static void PushRoomUpdate(IHubContext<GameHub> hubContext, Room room, List<User>? users)
         {
-            if (hubContext != null && users.Count != null)
+            if (hubContext != null && users?.Count != null)
             {
                 hubContext.Clients.Group(room.roomCode).SendAsync("roomUpdate", room, users).Wait();
             }

@@ -52,6 +52,25 @@ namespace _Mafia_API.Services
                         UpdateUser(x);
                     });
                 }
+                else
+                    GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == user.currentRoom), GetUsersOfRoom(user.currentRoom));
+
+
+            }
+        }
+
+        public void KickUser(string id)
+        {
+            var user = GetUser(id);
+
+            if (user != null)
+            {
+                var userRoom = user.currentRoom;
+                user.currentRoom = null;
+                UpdateUser(user);
+
+                GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == userRoom), GetUsersOfRoom(userRoom));
+
             }
         }
 
@@ -86,6 +105,9 @@ namespace _Mafia_API.Services
             UserStore.Add(user);
 
             GameHub.PushUserUpdate(hubContext, user);
+          
+            if (user.currentRoom != null)
+                GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == user.currentRoom), GetUsersOfRoom(user.currentRoom));
 
             return user;
         }

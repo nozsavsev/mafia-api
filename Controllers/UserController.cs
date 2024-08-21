@@ -112,11 +112,38 @@ namespace _Mafia_API.Controllers
             return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok));
         }
 
+        [HttpPost]
+        [Route("kickUser")]
+        public ActionResult<ResponseWrapper<string>> KickUser(string userId)
+        {
+
+            userService.KickUser(userId);
+
+            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok));
+        }
+
+
         [HttpGet]
         [Route("currentRoom")]
         public ActionResult<ResponseWrapper<Room>> GetCurremntRoom()
         {
             var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, roomService.GetRoom(HttpContext?.MafiaUser()?.currentRoom));
+            return Ok(rsp);
+        }
+
+        [HttpGet]
+        [Route("currentRoomUsers")]
+        public ActionResult<ResponseWrapper<List<User>>> GetCurremntRoomUsers()
+        {
+            var rsp = new ResponseWrapper<List<User>>(WrResponseStatus.Ok, userService.GetUsersOfRoom(HttpContext?.MafiaUser()?.currentRoom));
+            return Ok(rsp);
+        }
+
+        [HttpPost]
+        [Route("updateRoom")]
+        public ActionResult<ResponseWrapper<Room>> UpdateRoom([FromBody] Room room)
+        {
+            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, roomService.UpdateRoom(room));
             return Ok(rsp);
         }
 

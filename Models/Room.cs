@@ -36,6 +36,5 @@ namespace _Mafia_API.Models
         public bool doctorEnabled { get; set; } = true;
         public bool sherifEnabled { get; set; } = true;
         public bool sayHealedPlayer { get; set; } = false;
-        public bool sayKilledRole { get; set; } = false;
     }
 }
