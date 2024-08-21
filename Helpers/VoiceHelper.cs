@@ -158,7 +158,7 @@ namespace _Mafia_API.Helpers
                 case AnnouncementType.city_up:
                     {
                         int variant = new Random().Next(3);
-                        File.Copy(Path.Combine($"voice_static", "city_up_{variant}.mp3"), announcementPath);
+                        File.Copy(Path.Combine("voice_static", $"city_up_{variant}.mp3"), announcementPath);
                     }
                     break;
 
@@ -170,10 +170,10 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            Path.Combine($"voice_static","player_killed_pre_{variant}.mp3"),
+                            Path.Combine("voice_static",$"player_killed_pre_{variant}.mp3"),
                             userFile ,
-                            Path.Combine($"voice_static","player_killed_pst_{variant}.mp3"),
-                            Path.Combine($"voice_static","player_killed_cmnt_{variant_cmnt}.mp3")
+                            Path.Combine("voice_static",$"player_killed_pst_{variant}.mp3"),
+                            Path.Combine("voice_static",$"player_killed_cmnt_{variant_cmnt}.mp3")
                         },
                         announcementPath);
 
