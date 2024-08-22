@@ -27,13 +27,15 @@ namespace _Mafia_API.Controllers
 
         private readonly UserService userService;
         private readonly RoomService roomService;
+        private readonly GameService gameService;
         private readonly IHubContext<GameHub> hubContext;
 
-        public UserController(UserService UserService, RoomService RoomService, IHubContext<GameHub> HubContext)
+        public UserController(UserService UserService, RoomService RoomService, IHubContext<GameHub> HubContext, GameService GameService)
         {
             userService = UserService;
             roomService = RoomService;
             hubContext = HubContext;
+            gameService = GameService;
         }
 
         [HttpGet]
@@ -156,9 +158,30 @@ namespace _Mafia_API.Controllers
             return Ok(rsp);
         }
 
+        [HttpGet]
+        [Route("startGame")]
+        public ActionResult<ResponseWrapper<string>> StartGame()
+        {
+            gameService.startGame(HttpContext.MafiaUser().currentRoom);
+            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok);
+            return Ok(rsp);
+        }
+
+        [HttpGet]
+        [Route("continueGame")]
+        public ActionResult<ResponseWrapper<string>> ContinueGame()
+        {
+            string room = HttpContext.MafiaUser().currentRoom;
+            Task.Run(() => gameService.continueGame(room));
+
+            var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok);
+            return Ok(rsp);
+        }
+
+
         [HttpPost]
         [Route("pushAnonence")]
-        public ActionResult<ResponseWrapper<string>> pushAnonence([FromBody]PushAnouncment announcement)
+        public ActionResult<ResponseWrapper<string>> pushAnonence([FromBody] PushAnouncment announcement)
         {
             GameHub.PushAnounencment(hubContext, announcement.announcementType, HttpContext?.MafiaUser()?.currentRoom, HttpContext?.MafiaUser()?.id);
             var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok);

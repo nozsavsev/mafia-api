@@ -92,7 +92,7 @@ namespace _Mafia_API.Helpers
         {
             string announcement = "announcement_" + SnowflakeGlobal.Generate();
             string announcementPath = Path.Combine("voice_dynamic", announcement);
-            string userFile = Path.Combine("voice_dynamic", userId);
+            string userFile = userId == null ? "" : Path.Combine("voice_dynamic", userId);
 
             var user = UserService.st_GetUser(userId);
 
@@ -184,9 +184,9 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            Path.Combine($"voice_static","player_healed_pre_{variant}.mp3"),
+                            Path.Combine($"voice_static",$"player_healed_pre_{variant}.mp3"),
                             userFile ,
-                            Path.Combine($"voice_static","player_healed_cmnt_{variant_cmnt}.mp3")
+                            Path.Combine($"voice_static",$"player_healed_cmnt_{variant_cmnt}.mp3")
                         },
                         announcementPath);
                     }
@@ -197,7 +197,7 @@ namespace _Mafia_API.Helpers
 
                         ConcatenateMp3Files(new string[]
                         {
-                            Path.Combine($"voice_static","vote_killed_{variant}.mp3"),
+                            Path.Combine($"voice_static",$"vote_killed_{variant}.mp3"),
                             userFile ,
                         },
                         announcementPath);

@@ -40,9 +40,15 @@ namespace _Mafia_API.Models
         public bool? nameConfirmed { get; set; } = false;
         public UserRole? role { get; set; } = UserRole.peacfull;
         public UserStatus? status { get; set; } = UserStatus.alive;
-        public int? positiveVotes { get; set; } = 0;
-        public int? negativeVotes { get; set; } = 0;
+        public string? positiveVote { get; set; } = null;
+        public string? negativeVote { get; set; } = null;
         public bool? isGameMaster { get; set; } = false;
         public string? currentRoom { get; set; } = null;
+
+        public string? slutVote { get; set; } = null;
+        public string? mafiaVote { get; set; } = null;
+        public string? sherifVote { get; set; } = null;
+        public string? doctorVote { get; set; } = null;
+
     }
 }

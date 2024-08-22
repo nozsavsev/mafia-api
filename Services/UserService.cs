@@ -90,7 +90,7 @@ namespace _Mafia_API.Services
 
             var original = GetUser(user.id);
 
-            if ((original.nameConfirmed == false && user.nameConfirmed == true) || (original.fullName != user.fullName))
+            if ((original?.nameConfirmed == false && user?.nameConfirmed == true) || (original?.fullName != user?.fullName))
             {
                 VoiceHelper.GenerateText(user.fullName, user.id);
             }

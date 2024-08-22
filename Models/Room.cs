@@ -10,6 +10,9 @@ namespace _Mafia_API.Models
         [JsonPropertyName("day")]
         day = 0,
 
+        [JsonPropertyName("allSleeping")]
+        allSleeping,
+
         [JsonPropertyName("mafia")]
         mafia,
 
@@ -33,6 +36,7 @@ namespace _Mafia_API.Models
         public int nightCount { get; set; } = 0;
         public CurrentState state { get; set; } = CurrentState.lobbie;
         public bool slutEnabled { get; set; } = false;
+        public int mafiaCount { get; set; } = 2;
         public bool doctorEnabled { get; set; } = true;
         public bool sherifEnabled { get; set; } = true;
         public bool sayHealedPlayer { get; set; } = false;
