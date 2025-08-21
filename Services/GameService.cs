@@ -262,10 +262,9 @@ namespace _Mafia_API.Services
                 return true;
             }
 
-            // Check if target is valid (not dead)
             if (aliveSlut.vote == null)
             {
-                return false; // No vote set
+                return true; 
             }
 
             var target = userService.GetUser(aliveSlut.vote);
@@ -396,7 +395,7 @@ AnnouncementService announcementService) : IStageProcessor(userService, roomServ
             // Check if target is valid
             if (aliveSheriff.vote == null)
             {
-                return false; // No vote set
+                return true; // No vote set
             }
 
             var target = userService.GetUser(aliveSheriff.vote);
@@ -542,7 +541,7 @@ AnnouncementService announcementService) : IStageProcessor(userService, roomServ
             // Check if target is valid (not dead)
             if (aliveDoctor.vote == null)
             {
-                return false; // No vote set
+                return true; // No vote set
             }
 
             var target = userService.GetUser(aliveDoctor.vote);
