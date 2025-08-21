@@ -622,7 +622,6 @@ AnnouncementService announcementService) : IStageProcessor(userService, roomServ
             {
                 room.AnnouncementMutex.Release();
             }
-            await roomService.SetCurrentStageAsync(room.Id, CurrentStage.day);
 
             // Process night actions
             var mafiaKilled = userService.GetUser(room.mafiaFinalVote);
@@ -672,6 +671,8 @@ AnnouncementService announcementService) : IStageProcessor(userService, roomServ
                 // Kill user
                 await userService.SetStatusAsync(mafiaKilled.Id, UserStatus.dead);
             }
+
+            await roomService.SetCurrentStageAsync(room.Id, CurrentStage.day);
 
             // Clear all night stage final votes
             await roomService.SetSlutFinalVoteAsync(room.Id, null);
@@ -919,7 +920,9 @@ AnnouncementService announcementService) : IStageProcessor(userService, roomServ
                             // Try to enter the next stage
                             var stageEntered = await nextStageProcessor.StageInAsync(room);
                             
-                            if (stageEntered)
+
+
+                            if (stageEntered && !await ReEvaluateGame(roomId))
                             {
                                 // Stage was skipped (e.g., no alive players of that role)
                                 // Continue to the next stage automatically
