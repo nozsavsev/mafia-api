@@ -93,7 +93,7 @@ namespace _Mafia_API.Services
                 if (ownerChanged)
                     await GameHub.PushUserUpdateAsync(GetUser(room.roomOwnerId), hubContext);
 
-                if (room?.currentStage != CurrentStage.lobby)
+                if (room?.currentStage != CurrentStage.lobby && room != null)
                     await gameService.ReEvaluateGame(room.Id);
             }
         }

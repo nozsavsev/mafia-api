@@ -38,7 +38,6 @@ namespace _Mafia_API.Models
     public class User
     {
         public string Id { get; set; } = SnowflakeGlobal.Generate();
-        protected string? _currentRoomId { get; set; } = null;
         public string? currentRoomId { get; set; } = null;
         public Room? Room { get { return RoomRepository.GetRoomById(currentRoomId); } }
 
