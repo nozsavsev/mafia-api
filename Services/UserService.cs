@@ -2,127 +2,173 @@
 using _Mafia_API.Helpers;
 using _Mafia_API.Hubs;
 using _Mafia_API.Models;
+using _Mafia_API.Repositories;
+using Bogus.DataSets;
+using Google.Api.Gax;
 using Microsoft.AspNetCore.SignalR;
+using System.Threading.Tasks;
 
 namespace _Mafia_API.Services
 {
-    public class UserService
+#pragma warning disable CS9113 // Parameter is unread.
+    public class UserService(GameHub mafiaRealtime, IServiceProvider serviceProvider, IHubContext<GameHub> hubContext, Scheduler scheduler)
+#pragma warning restore CS9113 // Parameter is unread.
     {
-        IHubContext<GameHub> hubContext;
-
-        public static List<User> UserStore = new List<User>();
-
-        public UserService(IHubContext<GameHub> hubContext)
+        protected RoomService roomService
         {
-            this.hubContext = hubContext;
+            get
+            {
+                return serviceProvider.GetRequiredService<RoomService>();
+            }
         }
 
-        public List<User> GetUsers()
+        protected GameService gameService
         {
-            return UserStore;
+            get
+            {
+                return serviceProvider.GetRequiredService<GameService>();
+            }
         }
 
-        public User? GetUser(string id)
-        {
-            var user = UserStore.Find(x => x.id == id);
+        public User? GetUser(string? id)
+                 => UserRepository.GetUserById(id);
+        public User? CreateUser()
+             => UserRepository.NewUser();
 
-            if (user != null && !File.Exists(Path.Combine("data", id)))
-                if (user.nameConfirmed == true)
-                    VoiceHelper.GenerateText(user.fullName, user.id);
-
-            return user;
-        }
 
         public void DeleteUser(string id)
         {
-            var user = UserStore.Find(x => x.id == id);
-
-            if (File.Exists(Path.Combine("data", id)))
-                File.Delete(Path.Combine("data", id));
-
-            if (user != null)
-            {
-                UserStore.RemoveAll(x => x.id == id);
-
-                if (user.isGameMaster == true)
-                {
-                    GetUsersOfRoom(user.currentRoom).ForEach(x =>
-                    {
-                        x.currentRoom = null;
-                        UpdateUser(x);
-                    });
-                }
-                else
-                    GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == user.currentRoom), GetUsersOfRoom(user.currentRoom));
-
-
-            }
+            KickUser_unguarded(id);
+            UserRepository.DeleteUser(id);
         }
 
-        public void KickUser(string id)
+        //called by SignalR hub
+        public async Task<bool> JoinRoom(string userId, string roomCode)
+        {
+            var user = GetUser(userId);
+            var room = RoomRepository.GetRoomByCode(roomCode);
+
+            if (user != null && room != null && room.currentStage == CurrentStage.lobby)
+            {
+                if (user.currentRoomId == room.Id)
+                    KickUser_unguarded(userId);
+
+                user.currentRoomId = room.Id;
+
+                await GameHub.PushUserUpdateAsync(user, hubContext);
+                await GameHub.PushRoomUpdateAsync(room, hubContext);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task KickUser_unguarded(string id)
         {
             var user = GetUser(id);
-
+            var ownerChanged = false;
             if (user != null)
             {
-                var userRoom = user.currentRoom;
-                user.currentRoom = null;
-                UpdateUser(user);
+                var room = RoomRepository.GetRoomById(user.currentRoomId);
 
-                GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == userRoom), GetUsersOfRoom(userRoom));
+                if (room != null)
+                {
+                    if (room.users.Count() == 1)
+                    {
+                        roomService.DeleteRoom(room.Id);
+                    }
+                    else if (room.roomOwnerId == user.Id)
+                    {
+                        room.roomOwnerId = room.users.First(u => u.Id != user.Id).Id;
+                        ownerChanged = true;
+                    }
+                }
 
+                user.currentRoomId = null;
+
+                await GameHub.PushUserUpdateAsync(user, hubContext);
+                await GameHub.PushRoomUpdateAsync(room, hubContext);
+
+                if (ownerChanged)
+                    await GameHub.PushUserUpdateAsync(GetUser(room.roomOwnerId), hubContext);
+
+                if (room?.currentStage != CurrentStage.lobby)
+                    await gameService.ReEvaluateGame(room.Id);
             }
         }
 
-        public static User? st_GetUser(string id)
+        public async Task<User?> SetNameAsync(string userId, string? fullname)
         {
-            var user = UserStore.Find(x => x.id == id);
+            var user = GetUser(userId);
 
-            if (user != null && !File.Exists(Path.Combine("data", id)))
-                if (user.nameConfirmed == true)
-                    VoiceHelper.GenerateText(user.fullName, user.id);
+            if (user != null && fullname != user.fullName && !string.IsNullOrEmpty(fullname))
+            {
+                VoiceHelper.GenerateDynamicText(fullname, user.Id + ".mp3", null);
+
+                user.fullName = fullname;
+                Console.WriteLine($"name is set tp {GetUser(userId).fullName} : {fullname} (expected)");
+            }
+
+            await GameHub.PushUserUpdateAsync(user, hubContext);
 
             return user;
         }
 
-        public User? UpdateUser(User? user)
+
+        public async Task<User?> SetRoleAsync(string userId, UserRole? newRole, bool skipRoomUpdate = false)
         {
-
-            var original = GetUser(user.id);
-
-            if ((original?.nameConfirmed == false && user?.nameConfirmed == true) || (original?.fullName != user?.fullName))
-            {
-                VoiceHelper.GenerateText(user.fullName, user.id);
-            }
-
+            var user = GetUser(userId);
 
             if (user == null)
-            {
                 return null;
-            }
 
-            UserStore.RemoveAll(x => x.id == user.id);
-            UserStore.Add(user);
+            user.role = newRole;
 
-            GameHub.PushUserUpdate(hubContext, user);
-          
-            if (user.currentRoom != null)
-                GameHub.PushRoomUpdate(hubContext, RoomService._GetRooms().Find(x => x.roomCode == user.currentRoom), GetUsersOfRoom(user.currentRoom));
+            await GameHub.PushUserUpdateAsync(user, hubContext, skipRoomUpdate);
 
             return user;
         }
 
-        public List<User>? GetUsersOfRoom(string roomCode)
+        public async Task<User?> SetStatusAsync(string userId, UserStatus newStatus)
         {
-            var users = UserStore.FindAll(x => x.currentRoom == roomCode);
+            var user = GetUser(userId);
 
-            return users;
+            if (user == null)
+                return null;
+
+            user.status = newStatus;
+
+            await GameHub.PushUserUpdateAsync(user, hubContext);
+
+            return user;
         }
 
-        public User? GetNewUser()
+        public async Task<User?> SetVoteAsync(string userId, string? vote)
         {
-            var user = new User();
-            UserStore.Add(user);
+            var user = GetUser(userId);
+
+            if (user == null)
+                return null;
+
+            user.vote = vote;
+
+            await GameHub.PushUserUpdateAsync(user, hubContext);
+
+            return user;
+        }
+
+        public async Task<User?> SetVoteConfirmedAsync(string userId, bool voteConfirmed)
+        {
+            var user = GetUser(userId);
+
+            if (user == null)
+                return null;
+
+            user.voteConfirmed = voteConfirmed;
+
+            await GameHub.PushUserUpdateAsync(user, hubContext);
+
             return user;
         }
     }

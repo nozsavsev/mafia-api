@@ -4,8 +4,7 @@
       "commandName": "Project",
       "launchUrl": "weatherforecast",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "GOOGLE_APPLICATION_CREDENTIALS": "translation-user.json"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:5000;",
@@ -22,8 +21,7 @@
       "launchUrl": "https://localhost:5000/weatherforecast",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "https://localhost:5000;",
-        "GOOGLE_APPLICATION_CREDENTIALS": "translation-user.json"
+        "ASPNETCORE_URLS": "https://localhost:5000;"
       },
       "distributionName": ""
     }

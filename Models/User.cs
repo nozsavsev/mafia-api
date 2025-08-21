@@ -1,26 +1,28 @@
 ﻿using _Mafia_API.Helpers;
+using _Mafia_API.Repositories;
 using Bogus;
 using System.Text.Json.Serialization;
+using Macross.Json.Extensions;
 
 namespace _Mafia_API.Models
 {
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
     public enum UserRole
     {
-        [JsonPropertyName("peacfull")]
-        peacfull = 0,
-
-        [JsonPropertyName("slut")]
-        slut,
+        [JsonPropertyName("peaceful")]
+        peaceful = 0,
 
         [JsonPropertyName("mafia")]
         mafia,
 
-        [JsonPropertyName("sherif")]
-        sherif,
-
         [JsonPropertyName("doctor")]
         doctor,
+
+        [JsonPropertyName("sheriff")]
+        sheriff,
+
+        [JsonPropertyName("slut")]
+        slut,
     }
 
     [JsonConverter(typeof(JsonStringEnumMemberConverter))]
@@ -35,20 +37,21 @@ namespace _Mafia_API.Models
 
     public class User
     {
-        public string? id { get; set; } = SnowflakeGlobal.Generate();
-        public string? fullName { get; set; } = new Faker().Person.FullName;
-        public bool? nameConfirmed { get; set; } = false;
-        public UserRole? role { get; set; } = UserRole.peacfull;
-        public UserStatus? status { get; set; } = UserStatus.alive;
-        public string? positiveVote { get; set; } = null;
-        public string? negativeVote { get; set; } = null;
-        public bool? isGameMaster { get; set; } = false;
-        public string? currentRoom { get; set; } = null;
+        public string Id { get; set; } = SnowflakeGlobal.Generate();
+        protected string? _currentRoomId { get; set; } = null;
+        public string? currentRoomId { get; set; } = null;
+        public Room? Room { get { return RoomRepository.GetRoomById(currentRoomId); } }
 
-        public string? slutVote { get; set; } = null;
-        public string? mafiaVote { get; set; } = null;
-        public string? sherifVote { get; set; } = null;
-        public string? doctorVote { get; set; } = null;
+        public string? fullName { get; set; } = null;
+        public UserRole? role { get; set; } = UserRole.peaceful;
+        public UserStatus status { get; set; } = UserStatus.alive;
+
+
+        public string? vote { get; set; } = null;
+        public bool voteConfirmed { get; set; } = false;
+
+        public bool? isGameMaster { get { return RoomRepository.GetRoomById(currentRoomId)?.roomOwnerId == Id; } }
+
 
     }
 }

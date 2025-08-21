@@ -13,9 +13,7 @@
                 if (line.Trim().StartsWith("#"))
                     continue;
 
-                var parts = line.Trim().Split(
-                    '=',
-                    StringSplitOptions.RemoveEmptyEntries);
+                var parts = line.Trim().Split('=');
 
                 if (parts.Length != 2)
                     continue;

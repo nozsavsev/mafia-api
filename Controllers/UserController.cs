@@ -1,6 +1,9 @@
-﻿using _Mafia_API.Hubs;
+﻿using _Mafia_API.Helpers;
+using _Mafia_API.Hubs;
 using _Mafia_API.Models;
+using _Mafia_API.Models.DTOs;
 using _Mafia_API.Services;
+using Google.Api.Gax;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -16,189 +19,129 @@ namespace _Mafia_API.Controllers
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public class UserController : ControllerBase
+#pragma warning disable CS9113 // Parameter is unread.
+#pragma warning disable CS9113 // Parameter is unread.
+    public class UserController(UserService userService, GameHub mafiaRealtime, Scheduler scheduler, AnnouncementService announcementService, IHubContext<GameHub> hubContext) : ControllerBase
+#pragma warning restore CS9113 // Parameter is unread.
+#pragma warning restore CS9113 // Parameter is unread.
     {
-
-        public class PushAnouncment
-        {
-            public AnnouncementType announcementType { get; set; }
-
-        }
-
-        private readonly UserService userService;
-        private readonly RoomService roomService;
-        private readonly GameService gameService;
-        private readonly IHubContext<GameHub> hubContext;
-
-        public UserController(UserService UserService, RoomService RoomService, IHubContext<GameHub> HubContext, GameService GameService)
-        {
-            userService = UserService;
-            roomService = RoomService;
-            hubContext = HubContext;
-            gameService = GameService;
-        }
 
         [HttpGet]
         [Route("getUser")]
-        public ActionResult<ResponseWrapper<User>> ObtainSession()
+        public ActionResult<ResponseWrapper<UserDTO>> ObtainSession()
         {
             var user = HttpContext.MafiaUser();
 
             if (user == null)
             {
-                user = userService.GetNewUser();
+                user = userService.CreateUser();
             }
 
             if (user == null)
-                return BadRequest(new ResponseWrapper<User>(WrResponseStatus.InternalError));
+                return BadRequest(new ResponseWrapper<UserDTO>(WrResponseStatus.InternalError));
 
-            var cooptions = new CookieOptions
+            var cookieOptions = new CookieOptions
             {
                 Path = "/",
                 IsEssential = true,
                 HttpOnly = false,
                 Expires = DateTime.Now.AddDays(700),
-                Domain = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "localhost" : ".nozsa.com",
+                Domain = HttpContext.Request.Host.Host,
                 Secure = false,
+                SameSite = SameSiteMode.Lax
             };
 
-            HttpContext.Response.Cookies.Append("user", user.id, cooptions);
+            HttpContext.Response.Cookies.Append("user", user.Id, cookieOptions);
 
-            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok, user));
-        }
-
-        [HttpPut]
-        [Route("updateUser")]
-        public ActionResult<ResponseWrapper<User>> UpdateUser(User? user)
-        {
-
-            user = userService.UpdateUser(user);
-
-            if (user == null)
-                return BadRequest(new ResponseWrapper<User>(WrResponseStatus.InternalError));
-
-            var cooptions = new CookieOptions
-            {
-                Path = "/",
-                IsEssential = true,
-                HttpOnly = false,
-                Expires = DateTime.Now.AddDays(700),
-                Domain = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "localhost" : ".nozsa.com",
-                Secure = false,
-            };
-
-            HttpContext.Response.Cookies.Append("user", user.id, cooptions);
-
-            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok, user));
+            return Ok(new ResponseWrapper<UserDTO>(WrResponseStatus.Ok, UserDTO.FromUser(user)));
         }
 
         [HttpPost]
-        [Route("logout")]
-        public ActionResult<ResponseWrapper<string>> Logout()
+        [Route("testAnnouncement")]
+        public async Task<ActionResult<ResponseWrapper<UserDTO>>> TestAnnouncement()
         {
-
-            userService.DeleteUser(HttpContext.MafiaUser()?.id);
-
-            var cooptions = new CookieOptions
+            var user = HttpContext.MafiaUser();
+            if (user == null || user.Room == null)
             {
-                Path = "/",
-                IsEssential = true,
-                HttpOnly = false,
-                Expires = DateTime.Now.AddDays(700),
-                Domain = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ? "localhost" : ".nozsa.com",
-                Secure = false,
-            };
+                return BadRequest(new ResponseWrapper<UserDTO>(WrResponseStatus.InternalError));
+            }
 
-            HttpContext.Response.Cookies.Append("user", "", cooptions);
+            var announcementType = (AnnouncementType)Random.Shared.Next((int)AnnouncementType.game_start,  (int)AnnouncementType.peaceful_win +1);
 
-            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok));
+            announcementType = AnnouncementType.player_killed;
+
+            scheduler.ScheduleAnnouncement(TimeSpan.FromSeconds(1), announcementService.GetRandomAnnouncement(
+                    announcementType,
+                    user.Room.announcementLanguage,
+                    user.Room.announcementPEGIRating),
+                user.Room,
+                user);
+
+            return Ok(new ResponseWrapper<UserDTO>(WrResponseStatus.Ok));
         }
 
-        [HttpPost]
-        [Route("kickUser")]
-        public ActionResult<ResponseWrapper<string>> KickUser(string userId)
+
+        [HttpGet]
+        [Route("logOut")]
+        public ActionResult<ResponseWrapper<UserDTO>> LogOut()
         {
+            var user = HttpContext.MafiaUser();
+            if (user != null)
+            {
+                userService.DeleteUser(user.Id);
+            }
 
-            userService.KickUser(userId);
+            HttpContext.Response.Cookies.Delete("user");
 
-            return Ok(new ResponseWrapper<User>(WrResponseStatus.Ok));
+            return Ok(new ResponseWrapper<UserDTO>(WrResponseStatus.Ok));
         }
 
 
         [HttpGet]
         [Route("currentRoom")]
-        public ActionResult<ResponseWrapper<Room>> GetCurremntRoom()
+        public ActionResult<ResponseWrapper<RoomDTO?>> GetCurrentRoom()
         {
-            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, roomService.GetRoom(HttpContext?.MafiaUser()?.currentRoom));
+            var room = HttpContext?.MafiaUser()?.Room;
+            var rsp = new ResponseWrapper<RoomDTO?>(WrResponseStatus.Ok, room != null ? RoomDTO.FromRoom(room) : null);
             return Ok(rsp);
         }
 
-        [HttpGet]
-        [Route("currentRoomUsers")]
-        public ActionResult<ResponseWrapper<List<User>>> GetCurremntRoomUsers()
+
+        public class LetsMakeFrontendTyped
         {
-            var rsp = new ResponseWrapper<List<User>>(WrResponseStatus.Ok, userService.GetUsersOfRoom(HttpContext?.MafiaUser()?.currentRoom));
-            return Ok(rsp);
+            public RoomDTO room { get; set; } = new();
+            public UserDTO user { get; set; } = new();
+            public Announcement announcement { get; set; }
+            public AnnouncementLanguage announcementLanguage { get; set; }
+            public AnnouncementPEGIRating announcementPEGIRating { get; set; }
+            public AnnouncementType announcementType { get; set; }
         }
 
         [HttpPost]
-        [Route("updateRoom")]
-        public ActionResult<ResponseWrapper<Room>> UpdateRoom([FromBody] Room room)
+        [Route("unused")]
+        public ActionResult Unused(
+            LetsMakeFrontendTyped args
+            )//simply for openapi generator to puck up classes and enums
         {
-            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, roomService.UpdateRoom(room));
-            return Ok(rsp);
-        }
-
-        [HttpGet]
-        [Route("createRoom")]
-        public ActionResult<ResponseWrapper<Room>> CreateRoomAnd()
-        {
-            var room = roomService.createNewRoom();
-            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok, room);
-            return Ok(rsp);
-        }
-
-        [HttpGet]
-        [Route("startGame")]
-        public ActionResult<ResponseWrapper<string>> StartGame()
-        {
-            gameService.startGame(HttpContext.MafiaUser().currentRoom);
-            var rsp = new ResponseWrapper<Room>(WrResponseStatus.Ok);
-            return Ok(rsp);
-        }
-
-        [HttpGet]
-        [Route("continueGame")]
-        public ActionResult<ResponseWrapper<string>> ContinueGame()
-        {
-            string room = HttpContext.MafiaUser().currentRoom;
-            Task.Run(() => gameService.continueGame(room));
-
-            var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok);
-            return Ok(rsp);
+            return Ok();
         }
 
 
-        [HttpPost]
-        [Route("pushAnonence")]
-        public ActionResult<ResponseWrapper<string>> pushAnonence([FromBody] PushAnouncment announcement)
-        {
-            GameHub.PushAnounencment(hubContext, announcement.announcementType, HttpContext?.MafiaUser()?.currentRoom, HttpContext?.MafiaUser()?.id);
-            var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok);
-            return Ok(rsp);
-        }
 
 
         [HttpGet]
         [Route("fetchAnnouncement")]
-        public ActionResult<ResponseWrapper<string>> FetchAnnouncement(string? announcement)
+        public ActionResult<ResponseWrapper<string>> FetchAnnouncement(string announcement)
         {
-            var filePath = Path.Combine("voice_dynamic", announcement);
+            bool isStatic = announcement.StartsWith("static/");
+            string sanitizedAnnouncmentPath = announcement.Split('/')[1].Replace("/", "").Replace("\\", "").Replace(".", "");
 
-            if (!System.IO.File.Exists(filePath))
+            string path = $"{(isStatic ? "voice_static" : "voice_dynamic")}/{sanitizedAnnouncmentPath}.mp3";
+
+            if (!System.IO.File.Exists(path))
                 return NotFound();
 
-            var fileBytes = System.IO.File.ReadAllBytesAsync(filePath).Result;
+            var fileBytes = System.IO.File.ReadAllBytesAsync(path).Result;
             var base64FileContent = Convert.ToBase64String(fileBytes);
 
             var rsp = new ResponseWrapper<string>(WrResponseStatus.Ok, base64FileContent);
