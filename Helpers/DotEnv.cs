@@ -5,6 +5,8 @@
         public static void Load(string filePath)
         {
 
+            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", "googleUser.json");
+
             if (!File.Exists(filePath))
                 return;
 
