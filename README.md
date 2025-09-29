@@ -10,7 +10,7 @@ A real-time online Mafia game backend built with ASP.NET Core. Play the classic 
 
 - **No Host Computer Required**: Cloud-based system eliminates the need for a dedicated host computer
 - **Real-time Gameplay**: Seamless real-time synchronization with all players seeing updates instantly
-- **Multi-language Support**: Play in English, Spanish, or French
+- **Multi-language Support**: Play in English, Hebrew, or Russian
 - **Accident-Proof**: Rejoin your game seamlessly and continue where you left off
 - **Simple Room Join**: Join games with a simple room code, no complex registration process
 - **Fun for All Ages**: Carefully designed gameplay that's enjoyable for players of all ages
